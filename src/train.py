@@ -5,10 +5,30 @@ import nltk
 import random
 
 ########### LOAD DATA ##############
-desc = open('description.txt', 'r').read().lower()
+NUM_PROBS = 79
+solution_mapping = {1:34,2:33,3:50,4:50,5:44,6:50,7:50,8:50,9:50,10:42,
+                    11:4,12:50,13:50,14:50,15:50,16:50,17:47,18:27,19:50,20:50,
+                    21:50,22:50,23:50,24:50,25:50,26:50,27:50,28:50,29:50,30:50,
+                    31:50,32:50,33:50,34:50,35:50,36:50,37:50,38:50,39:50,40:49,
+                    41:50,42:50,43:31,44:34,45:49,46:19,47:50,48:50,49:43,50:47,
+                    51:31,52:50,53:17,54:50,55:50,56:50,57:50,58:50,59:50,60:50,
+                    61:15,62:50,63:30,64:35,65:50,66:11,67:50,68:26,69:50,70:28,
+                    71:50,72:46,73:50,74:44,75:34,76:50,77:50,78:50,79:49}
+
+descs = []
+for i in range(NUM_PROBS):
+    num = ''
+    if i < 10:
+         num = '0' + str(i) 
+    else:
+        num = str(i)
+    state = open('desc_'+num+'.txt', 'r').read().lower()
+    descs.append(state)
+  
+  
+      
 # Change constant below
-NUM_CODES = 10
-NUM_PROBS = 40
+
 code_mat = []
 for i in range(NUM_PROBS):
     problem = []
@@ -19,6 +39,8 @@ for i in range(NUM_PROBS):
         prob_num=str(i)
     for j in range(NUM_CODES):
         code = open('code_'+prob_num+'_('+str(j)+'.txt').read().lower()
+        
+
 ####################################
 
 
@@ -98,8 +120,7 @@ def sample(preds, temperature=1.0):
 
 english_model = tf.contrib.keras.models.Sequential()
 english_model.add(tf.contrib.keras.layers.Embedding(input_dim=english_vs,
-                                                    output_dim=32))
-english_model.add(tf.contrib.keras.layer.LSTM(32))
+                                                    output_dim=128))
                   
 code_model = tf.contrib.keras.models.Sequential()
 code_model.add(tf.contrib.keras.layer.LSTM(128, input_shape=(maxlen, len(code_ch), NUM_CODES)))
@@ -113,19 +134,20 @@ model.add(tf.contrib.keras.layers.Dense(128, activation = 'softmax'))
 
 ######### RUN MODEL, SAVE ########
 model.compile(loss='categorial_crossentropy', optimizer=tf.contrib.keras.optimizers.RMSprop(lr=0.01))
-# train code model
-for iteration in range(1, 60):
-    print()
-    print('-'*50)
-    print('Iteration', iteration)
-    model.fit(X, y, 
-            batch_size=128,
-            epochs=1)
 
-    problem = random.randint(0, NUM_PROBS-1)
-    start_index = random.randint(0, len)
+code_model.fit(X, y, batch_size=128,epochs=20,validation_split=0.2)
+# train code model
+# for iteration in range(1, 60):
+#     print()
+#     print('-'*50)
+#     print('Iteration', iteration)
+#     model.fit(X, y, 
+#             batch_size=128,
+#             epochs=1)
+
+#     problem = random.randint(0, NUM_PROBS-1)
+#     start_index = random.randint(0, len)
 
 
 #################################
-
 
