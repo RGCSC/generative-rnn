@@ -16,6 +16,7 @@ solution_mapping = {1:34,2:33,3:50,4:50,5:44,6:50,7:50,8:50,9:50,10:42,
                     61:15,62:50,63:30,64:35,65:50,66:11,67:50,68:26,69:50,70:28,
                     71:50,72:46,73:50,74:44,75:34,76:50,77:50,78:50,79:49}
 
+max_n = 0
 descs = []
 for i in range(NUM_PROBS):
     num = ''
@@ -23,11 +24,12 @@ for i in range(NUM_PROBS):
          num = '0' + str(i) 
     else:
         num = str(i)
-    state = open('desc_' + num + '.txt', 'r').read().lower()
+    state = nltk.word_tokenize(open('desc_' + num + '.txt', 'r').read().lower())
+    if len(state) > max_n:
+      max_n = len(state)
     descs.append(state)
-  
-X_english = np.array(descs)
-vocab = set(list(' '.join(descs)))
+
+vocab = set(descs)
 
 word_indices = dict((s, i) for i, s in enumerate(vocab))
 indices_word = dict((i, s) for i, s in enumerate(vocab))
@@ -45,10 +47,9 @@ for i in range(NUM_PROBS):
         problem.append(open('code_' + prob_num + '_(' + str(j) + '.txt').read().lower())
     code_mat.append(problem)
 
-print("Total chars: ", len(code_ch))
 code_ch = set(list(''.join(list(itertools.chain.from_iterable(code_mat)))))
-code_ch.remove(' ')
-
+# code_ch.remove(' ')
+print("Total chars: ", len(code_ch))
 ###############################################
 
 
@@ -68,7 +69,7 @@ next_chars = []
 for row in code_mat:
     temp1 = []
     temp2 = []
-    for j in range(len(row) - maxlen, step):
+    for j in range(0, len(row) - maxlen, step):
         temp1.append(row[j: j + maxlen])
         temp2.append(row[j + maxlen])
     seqs.append(temp1)
@@ -81,18 +82,35 @@ for row in seqs:
     if len(row) > max_row:
         max_row = len(row)
 
+# pad with spaces, get rid of jaggedness
 for row in seqs:
     for i in range(max_row - len(row)):
         row.append(' ')
 arr = np.array(seqs)
-X_code = np.zeros((arr.shape[1], maxlen, len(code_ch), NUM_PROBS), dtype=np.bool)
-y = np.zeros((arr.shape[1], len(code_ch), NUM_PROBS), dtype=np.bool)
 
-for i in range(len(seqs)):
-    for j, seq in enumerate(seqs[i]):
-        for pos, char in enumerate(seq):
-            X_code[j, pos, char_indices[char], i] = 1
-        y[j, char_indices[next_chars[j]], i] = 1
+for row in next_chars:
+  for i in range(max_row - len(row)):
+    row.append(' ')
+X_english = np.zeros((NUM_PROBS, max_n, len(vocab)), dtype=np.bool)
+
+X_code = np.zeros((NUM_PROBS, len(code_ch), maxlen, max_row), dtype=np.bool)
+y = np.zeros((NUM_PROBS, len(code_ch), max_row), dtype=np.bool)
+
+for i in range(NUM_PROBS):
+  for pos, word in enumerate(descs[i]):
+    X_english[i, pos, word_indices[word]] = 1
+      
+      
+for i in range(NUM_PROBS):
+  for j, seq in enumerate(seqs[i]):
+    for pos, char in enumerate(seq):
+      X_code[i, char_indices[char], pos, j] = 1
+    y[i, char_indices[next_chars[i][j]], j] = 1
+# for i in range(len(seqs)):
+#     for j, seq in enumerate(seqs[i]):
+#         for pos, char in enumerate(seq):
+#             X_code[j, pos, char_indices[char], i] = 1
+#         y[j, char_indices[next_chars[i][j]], i] = 1
       
 ###############################################
 
@@ -111,7 +129,7 @@ def sample(preds, temperature=1.0):
     return np.argmax(probs)
 
 english_model = tf.contrib.keras.models.Sequential()
-english_model.add(tf.contrib.keras.layers.Embedding(input_dim=english_vs,
+english_model.add(tf.contrib.keras.layers.Embedding(input_dim=len(vocab),
                                                     output_dim=128))
                   
 code_model = tf.contrib.keras.models.Sequential()
