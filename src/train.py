@@ -24,18 +24,11 @@ for i in range(NUM_PROBS):
          num = '0' + str(i) 
     else:
         num = str(i)
-<<<<<<< HEAD
     state = nltk.word_tokenize(open('desc_' + num + '.txt', 'r').read().lower())
     if len(state) > max_n:
       max_n = len(state)
     descs.append(state)
 
-=======
-    state = open('desc_' + num + '.txt', 'r').read().lower()
-    descs.append(state)
-  
-X_english = np.array(descs)
->>>>>>> aa6c5372f59c82444d55d6367b581303861e815a
 vocab = set(list(' '.join(descs)))
 
 word_indices = dict((s, i) for i, s in enumerate(vocab))
@@ -53,18 +46,10 @@ for i in range(NUM_PROBS):
     for j in range(solution_mapping[i + 1]):
         problem.append(open('code_' + prob_num + '_(' + str(j) + '.txt').read().lower())
     code_mat.append(problem)
-<<<<<<< HEAD
 
 code_ch = set(list(''.join(list(itertools.chain.from_iterable(code_mat)))))
 code_ch.remove(' ')
 print("Total chars: ", len(code_ch))
-=======
-
-print("Total chars: ", len(code_ch))
-code_ch = set(list(''.join(list(itertools.chain.from_iterable(code_mat)))))
-code_ch.remove(' ')
-
->>>>>>> aa6c5372f59c82444d55d6367b581303861e815a
 ###############################################
 
 
@@ -84,7 +69,7 @@ next_chars = []
 for row in code_mat:
     temp1 = []
     temp2 = []
-    for j in range(len(row) - maxlen, step):
+    for j in range(0, len(row) - maxlen, step):
         temp1.append(row[j: j + maxlen])
         temp2.append(row[j + maxlen])
     seqs.append(temp1)
@@ -101,11 +86,6 @@ for row in seqs:
     for i in range(max_row - len(row)):
         row.append(' ')
 arr = np.array(seqs)
-<<<<<<< HEAD
-=======
-X_code = np.zeros((arr.shape[1], maxlen, len(code_ch), NUM_PROBS), dtype=np.bool)
-y = np.zeros((arr.shape[1], len(code_ch), NUM_PROBS), dtype=np.bool)
->>>>>>> aa6c5372f59c82444d55d6367b581303861e815a
 
 X_english = np.zeros((NUM_PROBS, max_n, len(vocab)), dtype=np.bool)
 
@@ -149,19 +129,11 @@ code_model.add(tf.contrib.keras.layer.LSTM(128, input_shape=(maxlen, len(code_ch
 model = tf.contrib.keras.models.Sequential()
 model.add(tf.contrib.keras.layers.Merge([english_model, code_model]), mode='concat')
 model.add(tf.contrib.keras.layers.Dense(128, activation='softmax'))
-<<<<<<< HEAD
-
-###############################################
-=======
->>>>>>> aa6c5372f59c82444d55d6367b581303861e815a
 
 ###############################################
 
 
-<<<<<<< HEAD
-=======
 
->>>>>>> aa6c5372f59c82444d55d6367b581303861e815a
 ############# RUN AND SAVE MODEL ##############
 model.compile(loss='categorial_crossentropy', optimizer=tf.contrib.keras.optimizers.RMSprop(lr=0.01))
 model.fit(X_english, [X_code,y_code], batch_size=128,epochs=20,validation_split=0.2)
