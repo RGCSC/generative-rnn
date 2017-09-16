@@ -1,5 +1,6 @@
 import tensorflow as tf
 import numpy as np
+import itertools
 import pandas
 import nltk
 import random
@@ -26,6 +27,10 @@ for i in range(NUM_PROBS):
     descs.append(state)
   
 X_english = np.array(descs)
+vocab = set(list(' '.join(descs)))
+
+word_indices = dict((s, i) for i, s in enumerate(vocab))
+indices_word = dict((i, s) for i, s in enumerate(vocab))
 
 code_mat = []
 code_ch = set()
@@ -37,23 +42,22 @@ for i in range(NUM_PROBS):
     else:
         prob_num = str(i)
     for j in range(solution_mapping[i + 1]):
-        code = open('code_' + prob_num + '_(' + str(j) + '.txt').read().lower()
-        for h in range(len(code)):
-						code_ch.add(code[h])
+        problem.append(open('code_' + prob_num + '_(' + str(j) + '.txt').read().lower())
+    code_mat.append(problem)
 
-code_ch.remove(' ')
 print("Total chars: ", len(code_ch))
-        
+code_ch = set(list(''.join(list(itertools.chain.from_iterable(code_mat)))))
+code_ch.remove(' ')
+
 ###############################################
 
 
 
 ############### PREPROCESS DATA ###############
-tokens = nltk.word_tokenize(descs)
 
 # 'Convert' chars to indices and indices to chars
-char_indices = dict((c, i) for i, c in enumerate(chars))
-indices_char = dict((i, c) for i, c in enumerate(chars))
+char_indices = dict((c, i) for i, c in enumerate(code_ch))
+indices_char = dict((i, c) for i, c in enumerate(code_ch))
                   
 # cut code
 maxlen = 10
