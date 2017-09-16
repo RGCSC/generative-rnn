@@ -2,14 +2,23 @@ import tensorflow as tf
 import pandas
 import numpy as np
 import nltk
+import random
 
 ########### LOAD DATA ##############
 desc = open('description.txt', 'r').read().lower()
 # Change constant below
 NUM_CODES = 10
+NUM_PROBS = 40
 code_mat = []
-for i in range(1, NUM_CODES+1):
-  code_mat.append(open('code'+i+'.txt', 'r').read.lower())
+for i in range(NUM_PROBS):
+    problem = []
+    prob_num=''
+    if i < 10:
+        prob_num = '0'+str(i)
+    else:
+        prob_num=str(i)
+    for j in range(NUM_CODES):
+        code = open('code_'+prob_num+'_('+str(j)+'.txt').read().lower()
 ####################################
 
 
@@ -104,7 +113,17 @@ model.add(tf.contrib.keras.layers.Dense(128, activation = 'softmax'))
 
 ######### RUN MODEL, SAVE ########
 model.compile(loss='categorial_crossentropy', optimizer=tf.contrib.keras.optimizers.RMSprop(lr=0.01))
+# train code model
+for iteration in range(1, 60):
+    print()
+    print('-'*50)
+    print('Iteration', iteration)
+    model.fit(X, y, 
+            batch_size=128,
+            epochs=1)
 
+    problem = random.randint(0, NUM_PROBS-1)
+    start_index = random.randint(0, len)
 
 
 #################################
