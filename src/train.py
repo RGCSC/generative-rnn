@@ -29,7 +29,7 @@ for i in range(NUM_PROBS):
       max_n = len(state)
     descs.append(state)
 
-vocab = set(list(' '.join(descs)))
+vocab = set(descs)
 
 word_indices = dict((s, i) for i, s in enumerate(vocab))
 indices_word = dict((i, s) for i, s in enumerate(vocab))
@@ -48,7 +48,7 @@ for i in range(NUM_PROBS):
     code_mat.append(problem)
 
 code_ch = set(list(''.join(list(itertools.chain.from_iterable(code_mat)))))
-code_ch.remove(' ')
+# code_ch.remove(' ')
 print("Total chars: ", len(code_ch))
 ###############################################
 
@@ -82,26 +82,35 @@ for row in seqs:
     if len(row) > max_row:
         max_row = len(row)
 
+# pad with spaces, get rid of jaggedness
 for row in seqs:
     for i in range(max_row - len(row)):
         row.append(' ')
 arr = np.array(seqs)
 
+for row in next_chars:
+  for i in range(max_row - len(row)):
+    row.append(' ')
 X_english = np.zeros((NUM_PROBS, max_n, len(vocab)), dtype=np.bool)
 
-X_code = np.zeros((arr.shape[1], maxlen, len(code_ch), NUM_PROBS), dtype=np.bool)
-y = np.zeros((arr.shape[1], len(code_ch), NUM_PROBS), dtype=np.bool)
+X_code = np.zeros((NUM_PROBS, len(code_ch), maxlen, max_row), dtype=np.bool)
+y = np.zeros((NUM_PROBS, len(code_ch), max_row), dtype=np.bool)
 
 for i in range(NUM_PROBS):
   for pos, word in enumerate(descs[i]):
     X_english[i, pos, word_indices[word]] = 1
       
       
-for i in range(len(seqs)):
-    for j, seq in enumerate(seqs[i]):
-        for pos, char in enumerate(seq):
-            X_code[j, pos, char_indices[char], i] = 1
-        y[j, char_indices[next_chars[j]], i] = 1
+for i in range(NUM_PROBS):
+  for j, seq in enumerate(seqs[i]):
+    for pos, char in enumerate(seq):
+      X_code[i, char_indices[char], pos, j] = 1
+    y[i, char_indices[next_chars[i][j]], j] = 1
+# for i in range(len(seqs)):
+#     for j, seq in enumerate(seqs[i]):
+#         for pos, char in enumerate(seq):
+#             X_code[j, pos, char_indices[char], i] = 1
+#         y[j, char_indices[next_chars[i][j]], i] = 1
       
 ###############################################
 
