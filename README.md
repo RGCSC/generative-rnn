@@ -1,5 +1,5 @@
 # Generative Code
-## Hack the North 2017 Project
+### Hack the North 2017 Project
 
 This project uses machine learning concepts (implemented through keras) to attempt to generate Python code from text. In particular, users should be able to describe a short problem (for example, an algorithm contest problem), and the model should be able to produce code that effectively solves the problem.
 
