@@ -2,7 +2,6 @@ import tensorflow as tf
 import numpy as np
 import itertools
 import nltk
-# import keras
 
 ################## LOAD DATA ##################
 NUM_PROBS = 79
@@ -16,23 +15,23 @@ solution_mapping = {1:34,2:33,3:50,4:50,5:44,6:50,7:50,8:50,9:50,10:42,
                     61:15,62:50,63:30,64:35,65:50,66:11,67:50,68:26,69:50,70:28,
                     71:50,72:46,73:50,74:44,75:34,76:50,77:50,78:50,79:49}
 
-max_n = 0
-descs = []
-for i in range(1, NUM_PROBS+1):
-    num = ''
-    if i < 10:
-         num = '0' + str(i)
-    else:
-        num = str(i)
-    state = nltk.word_tokenize(open('desc_' + num + '.txt', 'r').read().lower())
-    if len(state) > max_n:
-      max_n = len(state)
-    descs.append(state)
+# max_n = 0
+# descs = []
+# for i in range(1, NUM_PROBS+1):
+#     num = ''
+#     if i < 10:
+#          num = '0' + str(i)
+#     else:
+#         num = str(i)
+#     # state = nltk.word_tokenize(open('/mydata/desc_' + num + '.txt', 'r').read().lower())
+#     if len(state) > max_n:
+#       max_n = len(state)
+#     descs.append(state)
 
-vocab = set(list(itertools.chain.from_iterable(descs)))
+# vocab = set(list(itertools.chain.from_iterable(descs)))
 
-word_indices = dict((s, i) for i, s in enumerate(vocab))
-indices_word = dict((i, s) for i, s in enumerate(vocab))
+# word_indices = dict((s, i) for i, s in enumerate(vocab))
+# indices_word = dict((i, s) for i, s in enumerate(vocab))
 
 code_mat = []
 # code_ch = set()
@@ -44,7 +43,7 @@ for i in range(1, NUM_PROBS+1):
     else:
         prob_num = str(i)
     for j in range(1, min(MAX_SAMP, solution_mapping[i]+1)):
-        problem.append(open('code_' + prob_num + '_(' + str(j) + ').txt').read().lower())
+        problem.append(open('/mydata/code_' + prob_num + '_(' + str(j) + ').txt').read().lower())
     code_mat.append(problem)
 
 # print(np.array(code_mat).shape)
@@ -68,47 +67,47 @@ seqs = []
 next_chars = []
 # print(code_mat)
 for row in code_mat:
-    # print(row)
-    prob_t1 = []
-    prob_t2 = []
-    for sub in row:
-        temp1 = []
-        temp2 = []
-        for k in range(0, len(sub) - maxlen, step):
-            temp1.append(sub[k: k + maxlen])
-            temp2.append(sub[k+ maxlen])
-        prob_t1.append(temp1)
-        prob_t2.append(temp2)
-    seqs.append(prob_t1)
-    next_chars.append(prob_t2)
+	# print(row)
+	prob_t1 = []
+	prob_t2 = []
+	for sub in row:
+		temp1 = []
+		temp2 = []
+		for k in range(0, len(sub) - maxlen, step):
+			temp1.append(sub[k: k + maxlen])
+			temp2.append(sub[k+ maxlen])
+		prob_t1.append(temp1)
+		prob_t2.append(temp2)
+	seqs.append(prob_t1)
+	next_chars.append(prob_t2)
 #print('num seqs:', len(seqs))
 
 # Vectorization of inputs, outputs
 max_row = 0
 for row in seqs:
-    for sub in row:
-        if len(sub) > max_row:
-            max_row = len(sub)
+	for sub in row:
+		if len(sub) > max_row:
+			max_row = len(sub)
 
 # pad with spaces, get rid of jaggedness
 for row in seqs:
-    for sub in row:
-        for i in range(maxlen - len(sub)):
-            sub.append(' ')
+	for sub in row:
+		for i in range(maxlen - len(sub)):
+			sub.append(' ')
 arr = np.array(seqs)
 
 for row in next_chars:
-    for sub in row:
-        for i in range(maxlen - len(sub)):
-            sub.append(' ')
-X_english = np.zeros((NUM_PROBS, max_n, len(vocab)), dtype=np.bool)
+	for sub in row:
+		for i in range(maxlen - len(sub)):
+			sub.append(' ')
+# X_english = np.zeros((NUM_PROBS, max_n, len(vocab)), dtype=np.bool)
 
 X_code = np.zeros((NUM_PROBS * 50 * 1000, maxlen, len(code_ch)), dtype=np.bool)
 y = np.zeros((NUM_PROBS * 50 * 1000, len(code_ch)), dtype=np.bool)
 
-for i in range(NUM_PROBS):
-  for pos, word in enumerate(descs[i]):
-    X_english[i, pos, word_indices[word]] = 1
+# for i in range(NUM_PROBS):
+#   for pos, word in enumerate(descs[i]):
+#     X_english[i, pos, word_indices[word]] = 1
 
 
 # print(np.array(next_chars).shape)
@@ -163,7 +162,6 @@ model.add(tf.contrib.keras.layers.Dense(len(code_ch), activation=tf.contrib.kera
 # outputs = keras.layers.Dense(len(code_ch), activation=keras.activations.softmax)(x)
 # model = keras.models.Model([english_model, code_model], outputs)
 
-
 # model = tf.contrib.keras.models.Sequential()
 # model.add(Merge([english_model, code_model], mode='concat'))
 # model.add(tf.contrib.keras.layers.Dense(128, activation='softmax'))
@@ -171,9 +169,10 @@ model.add(tf.contrib.keras.layers.Dense(len(code_ch), activation=tf.contrib.kera
 
 
 ############# RUN AND SAVE MODEL ##############
-model.compile(loss='categorical_crossentropy', optimizer=tf.contrib.keras.optimizers.RMSprop(lr=0.01))
-model.fit(X_code,y, batch_size=128,epochs=20,validation_split=0.2)
+model.compile(loss='categorical_crossentropy', optimizer=tf.contrib.keras.optimizers.RMSprop(lr=0.01), metrics=['accuracy'])
+model.fit(X_code,y, batch_size=128,epochs=1,validation_split=0.2)
 
-model.save("model.h5")
+#model.save("model.h5")
 #model = load_model("model.h5")
-#predict(self, x, batch_size=32, verbose=0)
+#pred = model.predict(X_code)
+#print(pred)
