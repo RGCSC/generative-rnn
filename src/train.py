@@ -2,6 +2,7 @@ import tensorflow as tf
 import numpy as np
 import itertools
 import nltk
+# import keras
 
 ################## LOAD DATA ##################
 NUM_PROBS = 79
@@ -49,8 +50,7 @@ for i in range(1, NUM_PROBS+1):
 # print(np.array(code_mat).shape)
 code_ch = set(list(''.join(list(itertools.chain.from_iterable(code_mat)))))
 # code_ch.remove(' ')
-print("Total chars: ", len(code_ch))
-###############################################
+#print("Total chars: ", len(code_ch))
 
 
 
@@ -68,43 +68,43 @@ seqs = []
 next_chars = []
 # print(code_mat)
 for row in code_mat:
-	# print(row)
-	prob_t1 = []
-	prob_t2 = []
-	for sub in row:
-		temp1 = []
-		temp2 = []
-		for k in range(0, len(sub) - maxlen, step):
-			temp1.append(sub[k: k + maxlen])
-			temp2.append(sub[k+ maxlen])
-		prob_t1.append(temp1)
-		prob_t2.append(temp2)
-	seqs.append(prob_t1)
-	next_chars.append(prob_t2)
-print('num seqs:', len(seqs))
+    # print(row)
+    prob_t1 = []
+    prob_t2 = []
+    for sub in row:
+        temp1 = []
+        temp2 = []
+        for k in range(0, len(sub) - maxlen, step):
+            temp1.append(sub[k: k + maxlen])
+            temp2.append(sub[k+ maxlen])
+        prob_t1.append(temp1)
+        prob_t2.append(temp2)
+    seqs.append(prob_t1)
+    next_chars.append(prob_t2)
+#print('num seqs:', len(seqs))
 
 # Vectorization of inputs, outputs
 max_row = 0
 for row in seqs:
-	for sub in row:
-		if len(sub) > max_row:
-			max_row = len(sub)
+    for sub in row:
+        if len(sub) > max_row:
+            max_row = len(sub)
 
 # pad with spaces, get rid of jaggedness
 for row in seqs:
-	for sub in row:
-		for i in range(maxlen - len(sub)):
-			sub.append(' ')
+    for sub in row:
+        for i in range(maxlen - len(sub)):
+            sub.append(' ')
 arr = np.array(seqs)
 
 for row in next_chars:
-	for sub in row:
-		for i in range(maxlen - len(sub)):
-			sub.append(' ')
+    for sub in row:
+        for i in range(maxlen - len(sub)):
+            sub.append(' ')
 X_english = np.zeros((NUM_PROBS, max_n, len(vocab)), dtype=np.bool)
 
-X_code = np.zeros((NUM_PROBS, 50, 1000, maxlen, len(code_ch)), dtype=np.bool)
-y = np.zeros((NUM_PROBS, 50, 1000, len(code_ch)), dtype=np.bool)
+X_code = np.zeros((NUM_PROBS * 50 * 1000, maxlen, len(code_ch)), dtype=np.bool)
+y = np.zeros((NUM_PROBS * 50 * 1000, len(code_ch)), dtype=np.bool)
 
 for i in range(NUM_PROBS):
   for pos, word in enumerate(descs[i]):
@@ -118,8 +118,8 @@ for i in range(NUM_PROBS):
       if len(seqs[i][j][k]) == 1: continue
 #       print(len(seqs[i][j][k]))
       for l in range(maxlen):
-        X_code[i, j, k, l, char_indices[seqs[i][j][k][l]]] = 1
-      y[i, j, k, char_indices[next_chars[i][j][k]]] = 1
+        X_code[i * j * k, l, char_indices[seqs[i][j][k][l]]] = 1
+      y[i * j * k, char_indices[next_chars[i][j][k]]] = 1
 
 
 # for i in range(len(seqs)):
@@ -127,8 +127,6 @@ for i in range(NUM_PROBS):
 #         for pos, char in enumerate(seq):
 #             X_code[j, pos, char_indices[char], i] = 1
 #         y[j, char_indices[next_chars[i][j]], i] = 1
-
-###############################################
 
 
 
@@ -144,35 +142,38 @@ def sample(preds, temperature=1.0):
     probs = np.random.multinomial(1, preds, 1)
     return np.argmax(probs)
 
-english_model = tf.contrib.keras.models.Sequential()
-english_model.add(tf.contrib.keras.layers.Embedding(input_dim=len(vocab),
-                                                    output_dim=128))
-
-code_model = tf.contrib.keras.models.Sequential()
-code_model.add(tf.contrib.keras.layers.LSTM(128, input_shape=(NUM_PROBS, 50, 1000, maxlen, len(code_ch))))
+# english_model = tf.contrib.keras.models.Sequential()
+# english_stuff = keras.layers.Input(shape=(len(vocab), 0))
+# # english_model.add(tf.contrib.keras.layers.Embedding(input_dim=len(vocab), output_dim=128))
+# english_enc = keras.layers.LSTM(128)(english_stuff)
+# english_model.add(tf.contrib.keras.layers.LSTM(128))
 
 model = tf.contrib.keras.models.Sequential()
-model.add(tf.contrib.keras.layers.Merge([english_model, code_model]), mode='concat')
-model.add(tf.contrib.keras.layers.Dense(128, activation='softmax'))
+# code_stuff = keras.layers.Input(shape=(NUM_PROBS * 50 * 1000, maxlen, len(code_ch)))
+model.add(tf.contrib.keras.layers.LSTM(128, batch_input_shape=(None, maxlen, len(code_ch))))
+# code_enc = keras.layers.LSTM(128, input_shape=(NUM_PROBS * 50 * 1000, maxlen, len(code_ch)))(code_stuff)
+model.add(tf.contrib.keras.layers.Dense(len(code_ch), activation=tf.contrib.keras.activations.softmax))
+#merged = tf.contrib.keras.layers.concatenate([english_model, code_model])
+#merge_model = tf.contrib.keras.models.Model(inputs = [english_model, code_model], outputs=merged)
+# merged = keras.layers.Add()([english_model, code_model])
+# out = keras.layers.Dense(128)(merged)
+# model = keras.models.Model(inputs=[english_model, code_model], outputs=out)
 
-###############################################
+# x = keras.layers.concatenate([english_enc, code_enc])
+# outputs = keras.layers.Dense(len(code_ch), activation=keras.activations.softmax)(x)
+# model = keras.models.Model([english_model, code_model], outputs)
+
+
+# model = tf.contrib.keras.models.Sequential()
+# model.add(Merge([english_model, code_model], mode='concat'))
+# model.add(tf.contrib.keras.layers.Dense(128, activation='softmax'))
 
 
 
 ############# RUN AND SAVE MODEL ##############
-model.compile(loss='categorial_crossentropy', optimizer=tf.contrib.keras.optimizers.RMSprop(lr=0.01))
-model.fit(X_english, [X_code,y_code], batch_size=128,epochs=20,validation_split=0.2)
+model.compile(loss='categorical_crossentropy', optimizer=tf.contrib.keras.optimizers.RMSprop(lr=0.01))
+model.fit(X_code,y, batch_size=128,epochs=20,validation_split=0.2)
 
-# train code model
-# for iteration in range(1, 60):
-#     print()
-#     print('-'*50)
-#     print('Iteration', iteration)
-#     model.fit(X, y,
-#             batch_size=128,
-#             epochs=1)
-
-#     problem = random.randint(0, NUM_PROBS-1)
-#     start_index = random.randint(0, len)
-
-###############################################
+model.save("model.h5")
+#model = load_model("model.h5")
+#predict(self, x, batch_size=32, verbose=0)
