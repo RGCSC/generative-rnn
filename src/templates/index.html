@@ -1,0 +1,154 @@
+<!-- <script type="text/javascript">
+	var userInput;
+	function readInput(){
+		userInput = document.getElementById("input").value;
+		var test = {"test": "value"};
+		$.ajax({
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify(test),
+                dataType: 'json',
+                url: 'https://keen-zenith-172201.appspot.com/index',
+                success: function (e) {
+                    console.log(e);
+                },
+                error: function(error) {
+                console.log(error);
+            }
+            });
+	}
+
+</script>
+
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>Smart Contest Solver</title>
+		<link rel="stylesheet" href="../static/style.css">	
+		<meta name="viewport" content="width=device-width, initial-scale=1.0">
+		<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+	</head>
+	<body>
+	<script type="text/javascript">
+  $(function() {
+    var submit_form = function(e) {
+      $.getJSON("/_add_numbers", {
+        a: $('input[name="a"]').val(),
+        b: $('input[name="b"]').val()
+      }, function(data) {
+        $('#result').text(data.result);
+        $('input[name=a]').focus().select();
+      });
+      console.log("testttt")
+      return false;
+    };
+    $('a#calculate').bind('click', submit_form);
+    $('input[type=text]').bind('keydown', function(e) {
+      if (e.keyCode == 13) {
+        submit_form(e);
+      }
+    });
+    $('input[name=a]').focus();
+  });
+</script>
+<h1>jQuery Example</h1>
+<p>
+  <input type="text" size="5" name="a"> +
+  <input type="text" size="5" name="b"> =
+  <span id="result">?</span>
+<p><a href=# id="calculate">calculate server side</a>
+		<!header>
+			<h1 class="pageTitle">
+				Smart Contest Solver
+			</h1>
+		</header>
+		
+		<main>
+			<div class="textBox">
+				<p class="textTitle">
+					Problem Statement Here
+				</p>
+				<textarea id="input"
+					cols = "30"
+					class="inputText"
+					rows = "20"></textarea>
+			</div>
+
+			<div class="textBox">
+				<p class="textTitle">
+					Code Output
+				</p>
+				<textarea readonly 
+					class="outputText"
+					cols = "30"
+					rows = "20"></textarea>
+			</div>
+			<div class="buttonBox">
+				<button onclick="readInput()">
+					Convert
+				</button>
+				
+			</div>
+		</main> 
+		
+	</body>
+</html>
+ -->
+
+
+ {% extends "layout.html" %}
+{% block body %}
+
+<!-- my stuff -->
+<script type="text/javascript">
+  $(function() {
+    var submit_problem = function(e) {
+      $.getJSON($SCRIPT_ROOT + '/_submit_problem', {
+		userInput: document.getElementById("input").value
+      }, function(data) {
+        $('#output').text(data.result);
+      });
+      return false;
+    };
+    $('#clickButton').bind('click', submit_problem);
+    $('input[name=a]').focus();
+  });
+</script>
+
+<!-- <link rel="stylesheet" href="../static/style.css">
+ -->
+		<header>
+			<h1 class="pageTitle">
+				Smart Contest Solver
+			</h1>
+		</header>
+		
+		<main>
+			<div class="textBox">
+				<p class="textTitle">
+					Problem Statement Here
+				</p>
+				<textarea id="input"
+					cols = "30"
+					class="inputText"
+					rows = "20"></textarea>
+			</div>
+
+			<div class="textBox">
+				<p class="textTitle">
+					Code Output
+				</p>
+				<textarea readonly id="output"
+					class="outputText"
+					cols = "30"
+					rows = "20"></textarea>
+			</div>
+			<div class="buttonBox">
+				<button id="clickButton">
+					Solve
+				</button>
+				
+			</div>
+		</main> 
+
+{% endblock %}
